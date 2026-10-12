@@ -20,6 +20,8 @@ Open http://localhost:4173. Set `PORT` to choose another port. `npm run build` c
 4. Open Activity → Buyers to inspect evidence, order history and conversations.
 5. Edit rules in Settings, pause/resume the agent, and inspect the activity log.
 
+Use **Ask Ray** in the agent dashboard header to summarize the current period, understand the pending queue, or prepare standard approvals. Ray presents the proposed actions for your review before applying your selected approvals to the synthetic workspace. Exceptions remain available for individual review.
+
 Other agents have capability previews and synthetic dashboards. Studio includes search, category filters, connectors, notification preferences and a draft workflow builder. The payment pages provide sample records and CSV exports. Global search opens with Command/Ctrl K.
 
 All state stays in browser local storage under `razorpay-agent-studio-v1`. Reset in the header restores the initial synthetic workspace. No payments, messages, calls, external account connections or AI requests are performed. Ray AI gives deterministic responses based on the synthetic workspace.
@@ -30,6 +32,7 @@ All state stays in browser local storage under `razorpay-agent-studio-v1`. Reset
 - `dist/studio.js`: catalog, carousel, connectors and draft workflows.
 - `dist/onboarding.js`: agent details, previews and installation.
 - `dist/dashboard.js`: KPIs, approvals, buyers, activity and settings.
+- `dist/ray.js`: dashboard assistant, summaries, queue explanations and reviewed approval proposals.
 - `dist/ui.js`: escaping, local SVG icons and reusable controls.
 - `dist/*.css`: responsive layouts and reduced-motion support.
 - `.openai/hosting.json`: private Sites deployment identity.

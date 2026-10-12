@@ -61,6 +61,35 @@ const eventTone=e=>['Waiting','Deferred','Scheduled'].includes(e.status)?'warnin
 function logEntry(title,buyer,cat,detail,amount,extras={}){return {title,buyer,cat,detail,amount,status:'Done',by:'Approved by Neha',manual:true,why:'You reviewed this action in your agent dashboard.',...extras};}
 function activityViewNav(view){return `<div class="activity-view-row"><nav class="segmented" aria-label="Activity views">${[['activity','Timeline','list'],['buyers','Buyers','users']].map(([id,label,ic])=>`<a class="activity-view ${view===id?'active':''}" href="#/agent/business/${id}" ${view===id?'aria-current="page"':''}>${icon(ic,15)}${label}</a>`).join('')}</nav><span class="muted small">${view==='buyers'?'Every business found, and where each one stands':'Everything the agent did, newest first'}</span></div>`;}
 
+function overviewSummary(ctx,pending,waiting){
+ const requests=pending.filter(id=>APPROVALS[id]?.amount),names={sai:'Sai Krupa PG',shivalik:'Shivalik',finch:'Finch',glow:'Glow'},labels=pending.includes('label')?(ctx.state.labelPending||[]).length:0;
+ const reviewParts=[pending.includes('intro')?'27 introductions':'',labels?`${labels} buyer ${labels===1?'label':'labels'}`:''].filter(Boolean),compactParts=[pending.includes('intro')?'27 intros':'',labels?`${labels} buyer ${labels===1?'label':'labels'}`:''].filter(Boolean);
+ const joinNames=items=>items.length<2?items[0]||'':`${items.slice(0,-1).join(', ')} and ${items.at(-1)}`;
+ const buyerNames=requests.map(id=>names[id]||APPROVALS[id].title),requestCount=requests.length;
+ let headline,compactHeadline,detail,compactDetail,next,compactNext;
+ if(requestCount){
+  headline=`${requestCount} ${requestCount===1?'buyer needs':'buyers need'} your approval · ${money(waiting)} in orders`;
+  compactHeadline=`${requestCount} ${requestCount===1?'approval':'approvals'} · ${money(waiting)} in orders`;
+  detail=`${joinNames(buyerNames)} ${requestCount===1?'is':'are'} waiting.`;
+  compactDetail=buyerNames.join(', ');
+  next=reviewParts.length?`Also review ${reviewParts.join(' and ')}.`:'All introductions and buyer labels are reviewed.';
+  compactNext=compactParts.length?`${compactParts.join(' · ')} to review`:'Introductions and labels reviewed';
+ }else if(pending.length){
+  headline='Your buyer approvals are all done.';
+  compactHeadline='Buyer approvals are all done';
+  detail=`Review ${reviewParts.join(' and ')}.`;
+  compactDetail=`${compactParts.join(' · ')} to review`;
+  next='44 new business buyers found this week.';
+  compactNext='44 new business buyers this week';
+ }else{
+  headline='You’re all caught up.';
+  detail='All buyer requests have been reviewed.';
+  next='Ray is tracking your next business opportunity.';
+ }
+ const line=(full,compact,strong=false)=>`<p class="overview-summary-line ${strong?'summary-headline':''}"><span class="summary-full">${esc(full)}</span><span class="summary-compact">${esc(compact||full)}</span></p>`;
+ return `<section class="callout agent-recommendation overview-summary" aria-label="Your business summary">${icon(pending.length?'sparkles':'check-circle',20)}<div class="overview-summary-copy">${line(headline,compactHeadline,true)}${line(detail,compactDetail)}${line(next,compactNext)}</div>${button(pending.length?`Review ${pending.length}`:'See activity','overview-review','primary')}</section>`;
+}
+
 function renderOverview(ctx){
  const d=dstate(ctx),pending=ctx.state.pending||[],waiting=pending.reduce((n,id)=>n+(APPROVALS[id]?.amount||0),0);
  const range=ctx.state.range||'since',scale=({week:.29,d30:.76,q:.43,since:1})[range]||1;
@@ -68,7 +97,7 @@ function renderOverview(ctx){
  const points=[.32,.86,1.24,1.58,2.02,2.38].map((v,i)=>({x:52+i*94,y:180-v/2.6*136,v:v*scale}));const path=points.map((p,i)=>`${i?'L':'M'}${p.x},${p.y}`).join(' ');
  const funnel=[['Found by the agent',1140],['Opted in to WhatsApp',714],['Replied',221],['Quoted',108],['First business order',63],['Reordered',19]];
  return `<div class="stack dashboard-overview"><div class="dashboard-kpis">${vals.map(k=>`<${k.action?'button':'div'} ${k.action?'data-action="overview-review"':''} class="dashboard-kpi ${k.action?'clickable':''}"><div class="kpi-icon ${k.tone}">${icon(k.icon,19)}</div><div class="kpi-value">${esc(k.value)}</div><div class="kpi-label">${esc(k.label)}</div><div class="muted small">${esc(k.sub)}</div></${k.action?'button':'div'}>`).join('')}</div>
- ${callout(`<div class="row overview-brief"><div><strong>44 new business buyers this week</strong>, 27 ready for an intro. ${pending.length?`${pending.length} items need your call.`:'Your approvals are all done.'}</div>${button(pending.length?`Review ${pending.length}`:'See activity','overview-review','primary')}</div>`,'')}
+ ${overviewSummary(ctx,pending,waiting)}
  <div class="overview-charts"><div class="card stack"><div class="section-head"><h3>Revenue from identified businesses</h3><span class="muted small">Weekly · ${range==='since'?'since 29 Aug':'selected period'}</span></div><svg class="revenue-chart" viewBox="0 0 560 225" role="img" aria-label="Weekly business revenue grew from ${money(Math.round(32000*scale))} to ${money(Math.round(238000*scale))}"><defs><linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b6ded" stop-opacity=".2"/><stop offset="1" stop-color="#2b6ded" stop-opacity="0"/></linearGradient></defs>${[0,1,2].map(v=>`<line x1="40" x2="552" y1="${180-v/2.6*136}" y2="${180-v/2.6*136}" stroke="#e9eef5"/><text x="30" y="${184-v/2.6*136}" text-anchor="end" class="chart-axis">${v?'₹'+(v*scale).toFixed(scale===1?0:1)+' L':'₹0'}</text>`).join('')}<path d="${path} L522,180 L52,180 Z" fill="url(#revenueFill)" class="chart-fill"/><path d="${path}" fill="none" stroke="#2b6ded" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" class="chart-line"/>${points.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="${i===5?5:3.5}" fill="#fff" stroke="#2b6ded" stroke-width="2"/><text x="${p.x}" y="${p.y-14}" text-anchor="middle" class="chart-value">₹${p.v.toFixed(2)} L</text><text x="${p.x}" y="212" text-anchor="middle" class="chart-axis">Wk ${i+1}</text>`).join('')}</svg></div><div class="card stack"><h3>From found to ordering</h3><div class="funnel-list">${funnel.map(([label,n],i)=>`<div><div class="row"><span>${esc(label)}</span><strong>${Math.round(n*scale).toLocaleString('en-IN')}</strong></div><div class="funnel-track"><span style="width:${n/1140*100}%;background:${i>=4?'#20a06f':'#2b6ded'}"></span></div></div>`).join('')}</div></div></div>
  <div class="card stack"><div class="section-head"><h3 class="row">${icon('sparkles',18)} What I learned</h3><span class="muted small">Precision 78% → 86% after ${ctx.state.labelsCount||120} labels</span></div><div>${[...(ctx.state.extraLearned||[]).map(l=>({...l,isNew:true})),...LEARNED].map(l=>{const mark=d.learnedMarks[l.id]||ctx.state.learnedMarks?.[l.id];return `<div class="learned-row ${mark==='undone'?'undone':''}">${l.isNew?badge('New','success'):''}<span>${esc(l.text)}</span>${mark?badge(mark==='kept'?'Kept':'Undone',mark==='kept'?'success':'neutral'):`<div class="row">${actButton('Keep','learn-keep',l.id,'secondary')}${actButton('Undo','learn-undo',l.id,'ghost')}</div>`}</div>`;}).join('')}</div></div></div>`;
 }
