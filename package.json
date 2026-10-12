@@ -3,5 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": {"dev":"node server.mjs", "start":"node server.mjs", "build":"node scripts/check.mjs", "check":"node scripts/check.mjs"}
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "build": "node scripts/check.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node scripts/workflow-test.mjs"
+  }
 }
