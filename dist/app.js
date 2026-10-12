@@ -107,8 +107,6 @@ document.addEventListener('click',event=>{if(ui.rangeOpen&&!event.target.closest
 document.addEventListener('input',dispatch);document.addEventListener('change',dispatch);
 document.addEventListener('keydown',event=>{
  if(event.target.matches('[role=radio]')&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)){event.preventDefault();const group=event.target.closest('[role=radiogroup]'),items=[...group.querySelectorAll('[role=radio]:not(:disabled)')],i=items.indexOf(event.target);const next=items[event.key==='Home'?0:event.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(event.key)?1:-1)+items.length)%items.length];next?.click();document.querySelector(`[data-action="${next.dataset.action}"][data-id="${next.dataset.id}"]${next.dataset.value?'[data-value="'+next.dataset.value+'"]':''}`)?.focus();}
- const storyTab=event.target.closest('[data-action="ob-story-step"]');
- if(storyTab&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)){event.preventDefault();const index=Number(storyTab.dataset.step),next=event.key==='Home'?0:event.key==='End'?4:(index+(['ArrowRight','ArrowDown'].includes(event.key)?1:-1)+5)%5;const target=document.querySelector(`[data-action="ob-story-step"][data-step="${next}"]`);target?.click();target?.focus({preventScroll:true});}
  const trigger=event.target.closest('[data-action="date-menu-toggle"]');
  if(trigger&&['ArrowDown','ArrowUp'].includes(event.key)){
   event.preventDefault();ui.rangeOpen=true;render();

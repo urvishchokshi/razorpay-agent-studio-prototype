@@ -43,17 +43,20 @@ const BUSINESS_STORY=[
  {name:'Close',icon:'receipt',caption:'Make the order easy to complete',description:'After your approval, send the GST invoice and payment link to confirm the order.',label:'INVOICE & PAYMENT',headline:'₹10,521 advance to confirm',body:'The buyer pays 50% now, with the balance due on delivery.',result:'Order confirmed · ready to dispatch',tone:'green'},
  {name:'Follow through',icon:'refresh',caption:'Help the buyer reorder',description:'Track delivery and prepare a reminder when the buyer is likely to need more stock.',label:'REORDER REMINDER',headline:'Keep the business coming back',body:'“Time to restock your bedsheets? Reorder at your trade price.”',result:'A repeat business account',tone:'green'}
 ];
-function storyState(ctx){return ctx.ui.story ||= {step:0,playing:!(globalThis.matchMedia?.('(prefers-reduced-motion:reduce)').matches),nextAt:Date.now()+4200};}
-function storyControls(ctx){const s=storyState(ctx);return button(icon(s.playing?'pause':s.step===4?'refresh':'play',14)+' '+(s.playing?'Pause':s.step===4?'Replay':'Play'),'ob-story-play','ghost',`aria-label="${s.playing?'Pause':s.step===4?'Replay':'Play'} storyline"`);}
+function storyState(ctx){return ctx.ui.story ||= {step:0,nextAt:Date.now()+3200};}
 function storyDetail(ctx){const step=BUSINESS_STORY[storyState(ctx).step];return `<div class="ob-story-explanation"><span class="ob-story-step-label">STEP ${storyState(ctx).step+1} OF 5</span><h3>${step.name}</h3><p>${step.description}</p></div><div class="ob-story-example"><span class="ob-story-example-label">${step.label} · SAI KRUPA PG</span><strong>${step.headline}</strong><p>${step.body}</p><span class="ob-story-result ${step.tone}">${icon('check-circle',15)}${step.result}</span></div>`;}
-function renderStory(ctx){const s=storyState(ctx);return `<section class="ob-story" aria-labelledby="ob-story-title"><div class="ob-story-heading"><div><h2 id="ob-story-title">How it works</h2><p>Follow one buyer from first signal to repeat order.</p></div><div class="ob-story-controls">${storyControls(ctx)}</div></div><ol class="ob-story-steps" role="tablist" aria-label="How the agent works" aria-orientation="horizontal">${BUSINESS_STORY.map((step,i)=>`<li role="presentation"><button type="button" class="ob-story-step ${s.step===i?'is-current':s.step>i?'is-done':''}" role="tab" id="story-step-${i}" aria-selected="${s.step===i}" aria-controls="story-detail" tabindex="${s.step===i?0:-1}" data-action="ob-story-step" data-step="${i}"><span class="ob-story-icon">${icon(step.icon,23)}</span><strong>${step.name}</strong><span class="ob-story-caption">${step.caption}</span></button>${i<4?`<span class="ob-story-link ${s.step===i&&s.playing?'is-moving':s.step>i?'is-done':''}" data-story-link="${i}" aria-hidden="true"><svg viewBox="0 0 100 12" preserveAspectRatio="none"><path class="story-arrow-track" d="M2 6H95M90 1L96 6L90 11"/><path class="story-arrow-progress" d="M2 6H95" pathLength="1"/></svg></span>`:''}</li>`).join('')}</ol><div id="story-detail" class="ob-story-detail" role="tabpanel" aria-labelledby="story-step-${s.step}">${storyDetail(ctx)}</div></section>`;}
-function paintStory(ctx){const root=document.querySelector('.ob-story');if(!root)return;const s=storyState(ctx);root.querySelectorAll('.ob-story-step').forEach((el,i)=>{el.classList.toggle('is-current',s.step===i);el.classList.toggle('is-done',s.step>i);el.setAttribute('aria-selected',String(s.step===i));el.tabIndex=s.step===i?0:-1;});root.querySelectorAll('[data-story-link]').forEach((el,i)=>{el.classList.toggle('is-moving',s.step===i&&s.playing);el.classList.toggle('is-done',s.step>i);});const detail=root.querySelector('#story-detail');detail.setAttribute('aria-labelledby','story-step-'+s.step);detail.innerHTML=storyDetail(ctx);const controls=root.querySelector('.ob-story-controls'),hadFocus=controls.contains(document.activeElement);controls.innerHTML=storyControls(ctx);if(hadFocus)controls.querySelector('button')?.focus({preventScroll:true});}
+function renderStory(ctx){const s=storyState(ctx);return `<section class="ob-story" aria-labelledby="ob-story-title"><div class="ob-story-heading"><div><h2 id="ob-story-title">How it works</h2><p>Follow one buyer from first signal to repeat order.</p></div></div><ol class="ob-story-steps" aria-label="How the agent works">${BUSINESS_STORY.map((step,i)=>`<li><div class="ob-story-step ${s.step===i?'is-current':s.step>i?'is-done':''}" id="story-step-${i}" ${s.step===i?'aria-current="step"':''}><span class="ob-story-icon">${icon(step.icon,23)}</span><strong>${step.name}</strong><span class="ob-story-caption">${step.caption}</span></div>${i<4?`<span class="ob-story-link ${s.step===i?'is-moving':s.step>i?'is-done':''}" data-story-link="${i}" aria-hidden="true"><svg viewBox="0 0 100 12" preserveAspectRatio="none"><path class="story-arrow-track" d="M2 6H95M90 1L96 6L90 11"/><path class="story-arrow-progress" d="M2 6H95" pathLength="1"/></svg></span>`:''}</li>`).join('')}</ol><div id="story-detail" class="ob-story-detail" role="region" aria-labelledby="story-step-${s.step}">${storyDetail(ctx)}</div></section>`;}
+function paintStory(ctx){
+ const root=document.querySelector('.ob-story');if(!root)return;const s=storyState(ctx);
+ root.querySelectorAll('.ob-story-step').forEach((el,i)=>{el.classList.toggle('is-current',s.step===i);el.classList.toggle('is-done',s.step>i);if(s.step===i)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current');});
+ root.querySelectorAll('[data-story-link]').forEach((el,i)=>{el.classList.toggle('is-moving',s.step===i);el.classList.toggle('is-done',s.step>i);});
+ const detail=root.querySelector('#story-detail');detail.setAttribute('aria-labelledby','story-step-'+s.step);detail.innerHTML=storyDetail(ctx);
+}
 export function tickStory(ctx){
  if(ctx.ui.route!=='/agent/business'||!document.querySelector('.ob-story')||document.getElementById('overlay-root')?.firstChild)return;
- const s=storyState(ctx);if(!s.playing)return;
- if(document.hidden){s.nextAt=Date.now()+4200;return;}
- if(globalThis.matchMedia?.('(prefers-reduced-motion:reduce)').matches){s.playing=false;paintStory(ctx);return;}
- if(Date.now()<s.nextAt)return;s.step=Math.min(4,s.step+1);s.nextAt=Date.now()+4200;if(s.step===4)s.playing=false;paintStory(ctx);
+ const s=storyState(ctx);
+ if(document.hidden||globalThis.matchMedia?.('(prefers-reduced-motion:reduce)').matches){s.nextAt=Date.now()+3200;return;}
+ if(Date.now()<s.nextAt)return;s.step=(s.step+1)%BUSINESS_STORY.length;s.nextAt=Date.now()+3200;paintStory(ctx);
 }
 export function renderDetail(ctx,id='business'){
  const a=AGENTS[id]||AGENTS.business,business=id==='business',installed=business&&ctx.state.installed;
@@ -188,8 +191,6 @@ function beginScan(ctx, s) {
 
 export function handleOnboarding(action, el, ctx) {
   if (!action?.startsWith('ob-')) return false;
-  if(action==='ob-story-step'){const s=storyState(ctx);s.step=Math.max(0,Math.min(4,Number(el.dataset.step)));s.playing=false;paintStory(ctx);return true;}
-  if(action==='ob-story-play'){const s=storyState(ctx);if(s.playing)s.playing=false;else{if(s.step===4)s.step=0;s.playing=true;s.nextAt=Date.now()+4200;}paintStory(ctx);document.querySelector('[data-action="ob-story-play"]')?.focus({preventScroll:true});return true;}
   if (action === 'ob-back') { ctx.nav('studio'); return true; }
   if (action === 'ob-dashboard') { ctx.nav('dashboard'); return true; }
   if (action === 'ob-open-install') { openInstall(ctx, el?.dataset?.agent || 'business'); return true; }
