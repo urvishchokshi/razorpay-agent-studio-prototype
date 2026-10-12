@@ -23,6 +23,7 @@ export function performance(id='since') {
   const counts=new Map();for(const o of orders)counts.set(o.buyer,(counts.get(o.buyer)||0)+1);
   const buckets=[];const step=id==='week'?1:7;
   for(let t=stamp(r.start);t<=stamp(id==='week'?r.end:end);t+=step*DAY){const start=iso(t),finish=iso(Math.min(t+(step-1)*DAY,stamp(id==='week'?r.end:end)));buckets.push({start,end:finish,label:step===1?dateLabel(start):`${dateLabel(start)}–${dateLabel(finish)}`,amount:orders.filter(o=>o.date>=start&&o.date<=finish).reduce((s,o)=>s+o.amount,0),future:start>TODAY});}
+  let cumulative=0;for(const bucket of buckets){cumulative+=bucket.amount;bucket.cumulative=cumulative;}
   const revenue=orders.reduce((s,o)=>s+o.amount,0),repeat=[...counts.values()].filter(v=>v>1).length;
   return {revenue,orders:orders.length,accounts:counts.size,repeat,average:orders.length?Math.round(revenue/orders.length):0,buckets,caption:rangeCaption(r.id),label:r.label,funnel:[['Found by the agent',cohort.length],['Opted in to WhatsApp',cohort.filter(x=>x.consented).length],['Replied',cohort.filter(x=>x.replied).length],['Quoted',cohort.filter(x=>x.quoted).length],['Business accounts',counts.size],['Reordered',repeat]]};
 }
@@ -35,7 +36,7 @@ export function questionRange(question,fallback='since') {
   return fallback;
 }
 export const CONNECTOR_DEFAULTS={payments:'Built in',checkout:'Built in',whatsapp:'Pre-enabled',sms:'Pre-enabled',email:'Pre-enabled',shiprocket:'Pre-enabled',elevenlabs:'Pre-enabled',shopify:'Available',tally:'Expires in 3 days',sarvam:'Available',zoho:'Available'};
-export const connectorStatus=(state,id)=>state.connectors?.[id]||CONNECTOR_DEFAULTS[id]||'Available';
+export const connectorStatus=(state,id)=>(state.connectors?.[id]||CONNECTOR_DEFAULTS[id]||'Available').replace(/^Demo connected$/,'Connected');
 export const connected=(state,id)=>!['Available','Disconnected','Expired'].includes(connectorStatus(state,id));
 export const defaultQuote=()=>({embroidery:60,delivery:'2026-10-24'});
 export function quoteErrors(q=defaultQuote()) {

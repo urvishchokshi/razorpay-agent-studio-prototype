@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {performance,questionRange,quoteAmount,quoteErrors,queueAmount,agentStatus,modeLabel,effectiveRule,autoAvailable,connectorStatus,INTRO_RECIPIENTS,selectedRecipients} from '../dist/model.js';
-import {respond} from '../dist/ray.js';
+import {respond,renderRayPanel} from '../dist/ray.js';
 import {renderDashboard,handleDashboard} from '../dist/dashboard.js';
+import {renderDetail} from '../dist/onboarding.js';
 import {renderStudio} from '../dist/studio.js';
 const state={pending:['intro','sai','shivalik','finch','glow','label'],labelPending:['khan','verma','dsouza'],config:{mode:'review',tiers:[8,12,15]},quotes:{finch:{embroidery:80,delivery:'2026-10-24'}},connectors:{tally:'Connected'},range:'week'};
 const ctx={state,ui:{},rerender(){},update(patch){Object.assign(state,patch)},toast(){},persist(){}};
@@ -19,4 +20,7 @@ check('all intro recipients are unique and selectable',()=>{assert.equal(INTRO_R
 check('paused sending is visibly disabled',()=>{state.paused=true;const h=renderDashboard(ctx,'approvals');assert.match(h,/Agent paused/);assert.match(h,/data-action="approval-approve"[^>]*disabled/);state.paused=false});
 check('mobile buyer summaries and radio semantics are present',()=>{assert.match(renderDashboard(ctx,'buyers'),/mobile-buyer-list/);assert.match(renderDashboard(ctx,'settings'),/role="radiogroup" aria-label="Operating mode"/);assert.match(renderDashboard(ctx,'settings'),/role="radio" aria-checked="true"/)});
 check('all screens render after partial Ray context',()=>{ctx.ui.dashboard={approval:'sai'};for(const tab of ['dashboard','approvals','buyers','activity','settings'])assert.ok(renderDashboard(ctx,tab).length>100)});
+check('cumulative revenue never dips and ends at the reported total',()=>{for(const id of ['week','d30','q','since']){const stats=performance(id);assert.equal(stats.buckets.at(-1).cumulative,stats.revenue);for(let i=1;i<stats.buckets.length;i++)assert.ok(stats.buckets[i].cumulative>=stats.buckets[i-1].cumulative)}});
+check('Ray is directly available on the dashboard and as a full page',()=>{assert.match(renderDashboard(ctx,'dashboard'),/ray-panel ray-inline ray-dashboard/);assert.match(renderRayPanel(ctx),/ray-panel ray-inline ray-page/);assert.match(renderRayPanel(ctx),/id="dashboard-ray-form"/)});
+check('product screens omit demo disclaimers and catalog filler',()=>{const text=html=>html.replace(/<[^>]*>/g,' ');for(const html of [renderStudio(ctx,'home'),renderStudio(ctx,'mine'),renderStudio(ctx,'connectors'),renderDetail(ctx,'business'),renderDashboard(ctx,'dashboard'),renderDashboard(ctx,'settings'),renderRayPanel(ctx)])assert.doesNotMatch(text(html),/synthetic|demo|prototype|simulated|less busywork/i)});
 console.log(`${count} workflow checks passed.`);
