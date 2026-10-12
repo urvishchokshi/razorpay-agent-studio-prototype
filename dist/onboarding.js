@@ -90,10 +90,27 @@ function draftPreview(s) {
 function input(name, label, value, extra = '') { return `<label class="field ob-field"><span>${label}</span><input type="number" data-action="ob-config" data-key="${name}" ${attrs(value)} ${extra}></label>`; }
 function radio(name, current, value, label, recommended = false) { return `<label class="ob-radio ${String(current) === String(value) ? 'selected' : ''}"><input type="radio" name="${name}" data-action="ob-config" data-key="${name}" value="${esc(String(value))}" ${String(current) === String(value) ? 'checked' : ''}><span>${label}</span>${recommended ? badge('Recommended', 'green') : ''}</label>`; }
 function toggle(name, checked, label, description = '') { return `<label class="ob-toggle-row"><div><strong>${label}</strong>${description ? `<span class="muted">${description}</span>` : ''}</div><input class="ob-switch" type="checkbox" data-action="ob-config" data-key="${name}" ${checked ? 'checked' : ''} aria-label="${label}"></label>`; }
-function connectionCard(s, id, name, i, tint, desc, options = '') {
-  const status = id === 'shop' ? s.shop : id === 'gst' ? s.gst : connected({connectors:s.connections},{pay:'payments',ship:'shiprocket',wa:'whatsapp',voice:s.voice==='sv'?'sarvam':'elevenlabs'}[id])?'done':'idle';
-  const displayName = id === 'gst' ? s.gstChoice : name;
-  return `<div class="card ob-connect-card"><div class="ob-connect-brand ${tint}">${icon(i, 28)}<span>${esc(displayName)}</span></div><div class="ob-connect-copy"><h3>${name}</h3><p class="muted">${desc}</p>${options}<div class="row ob-connect-status">${status === 'idle' ? button('Connect demo', 'ob-connect', 'primary', `data-key="${id}"`) : status === 'loading' ? '<span class="row muted"><span class="ob-spinner"></span>Connecting demo…</span>' : `<span class="row ob-connected"><span class="ob-status-dot"></span>${id === 'shop' ? 'Connected · kesarlinen.myshopify.com' : id === 'gst' ? `Connected · ${esc(s.gstChoice)}` : 'Demo enabled'}</span>`}<span class="ob-required">${id === 'voice'||(id==='gst'&&!s.gstRequired) ? 'OPTIONAL' : 'REQUIRED'}</span></div></div></div>`;
+function connectionState(s,id){
+  if(s.connecting?.includes(id))return 'loading';
+  return id==='shop'?s.shop:id==='gst'?s.gst:connected({connectors:s.connections},{pay:'payments',ship:'shiprocket',wa:'whatsapp',voice:s.voice==='sv'?'sarvam':'elevenlabs'}[id])?'done':'idle';
+}
+function connectionStatus(s,id){
+  const status=connectionState(s,id);
+  return `${status==='idle'?button('Connect demo','ob-connect','primary',`data-key="${id}"`):status==='loading'?'<span class="row muted ob-status-change"><span class="ob-spinner" aria-hidden="true"></span>Connecting demo…</span>':`<span class="row ob-connected ob-status-change"><span class="ob-status-dot"></span>${id==='shop'?'Connected · kesarlinen.myshopify.com':id==='gst'?`Connected · ${esc(s.gstChoice)}`:'Demo enabled'}</span>`}<span class="ob-required">${id==='voice'||(id==='gst'&&!s.gstRequired)?'OPTIONAL':'REQUIRED'}</span>`;
+}
+function connectionCard(s,id,name,i,tint,desc,options=''){
+  const displayName=id==='gst'?s.gstChoice:name;
+  return `<div class="card ob-connect-card" data-connection-key="${id}"><div class="ob-connect-brand ${tint}">${icon(i,28)}<span>${esc(displayName)}</span></div><div class="ob-connect-copy"><h3>${name}</h3><p class="muted">${desc}</p>${options}<div class="row ob-connect-status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1">${connectionStatus(s,id)}</div></div></div>`;
+}
+function refreshConnection(ctx,s,id){
+  s.connections=ctx.state.connectors;
+  const card=document.querySelector(`[data-connection-key="${id}"]`),status=card?.querySelector('.ob-connect-status');
+  if(!status)return;
+  const hadFocus=card.contains(document.activeElement);
+  status.innerHTML=connectionStatus(s,id);
+  if(id==='gst'&&s.gst!=='idle')card.querySelector('.ob-segment')?.remove();
+  refreshDynamic(ctx);
+  if(hadFocus)status.focus({preventScroll:true});
 }
 function connectStep(s) {
   const wa = `<div class="ob-options"><label><input type="radio" data-action="ob-tool-choice" data-key="wa" name="wa" value="builtin" ${s.wa === 'builtin' ? 'checked' : ''}>Built-in WhatsApp</label><label><input type="radio" data-action="ob-tool-choice" data-key="wa" name="wa" value="own" ${s.wa === 'own' ? 'checked' : ''}>Use my provider</label>${s.wa === 'own' ? `<select aria-label="WhatsApp provider" data-action="ob-tool-choice" data-key="waVendor">${['Interakt', 'Wati', 'Gupshup'].map(v => `<option ${s.waVendor === v ? 'selected' : ''}>${v}</option>`).join('')}</select>` : ''}</div>`;
@@ -130,7 +147,7 @@ function renderInstall(ctx) {
 export function openInstall(ctx, agent = 'business') {
   if (agent !== 'business') { presentPreview(ctx, agent); return; }
   cancelTimers(getInstall(ctx));
-  ctx.ui.install = { token: String(Date.now()) + Math.random().toString(36).slice(2, 7), agent, step: 0, shop: connected(ctx.state,'shopify')?'done':'idle', gst: connected(ctx.state,ctx.state.installDraft?.gstChoice==='Zoho Books'?'zoho':'tally')?'done':'idle', gstRequired:false, gstChoice: 'Tally', wa: 'builtin', waVendor: 'Interakt', voice: 'el', draft: { ...DEFAULT_CONFIG, ...ctx.state.config, tiers: [...(ctx.state.config?.tiers || DEFAULT_CONFIG.tiers)] }, scan: 0, authorised: false, phase: null, ...ctx.state.installDraft, draft:{...DEFAULT_CONFIG,...ctx.state.config,...ctx.state.installDraft?.draft,mode:'review',tiers:[...(ctx.state.installDraft?.draft?.tiers||ctx.state.config.tiers||DEFAULT_CONFIG.tiers)]},timers: [] };
+  ctx.ui.install = { token: String(Date.now()) + Math.random().toString(36).slice(2, 7), agent, step: 0, shop: connected(ctx.state,'shopify')?'done':'idle', gst: connected(ctx.state,ctx.state.installDraft?.gstChoice==='Zoho Books'?'zoho':'tally')?'done':'idle', gstRequired:false, gstChoice: 'Tally', wa: 'builtin', waVendor: 'Interakt', voice: 'el', draft: { ...DEFAULT_CONFIG, ...ctx.state.config, tiers: [...(ctx.state.config?.tiers || DEFAULT_CONFIG.tiers)] }, scan: 0, authorised: false, phase: null, ...ctx.state.installDraft, draft:{...DEFAULT_CONFIG,...ctx.state.config,...ctx.state.installDraft?.draft,mode:'review',tiers:[...(ctx.state.installDraft?.draft?.tiers||ctx.state.config.tiers||DEFAULT_CONFIG.tiers)]},connecting:[],timers: [] };
   if(ctx.ui.install.step===2&&ctx.ui.install.scan<100)beginScan(ctx,ctx.ui.install);
   present(ctx);
 }
@@ -146,7 +163,7 @@ function refreshDynamic(ctx) {
     document.querySelectorAll('.ob-radio input').forEach(el => el.closest('.ob-radio')?.classList.toggle('selected', el.checked));
   }
   if (s.step === 3) { const notifications = document.getElementById('ob-permission-notifications'); if (notifications) notifications.textContent = s.draft.approvalWhatsapp ? 'WhatsApp, Dashboard' : 'Dashboard'; }
-  const hint = document.getElementById('ob-foot-hint'); if (hint) hint.textContent = !canNext(s) ? s.step === 1 ? 'Review the highlighted configuration fields' : s.step === 3 ? 'Tick the authorisation to install' : '' : '';
+  const hint = document.getElementById('ob-foot-hint'); if (hint) hint.textContent = !canNext(s) ? s.step === 1 ? 'Review the highlighted configuration fields' : s.step === 3 ? 'Tick the authorisation to install' : s.step===0?'Connect the required tools to continue':'' : '';
 }
 function beginScan(ctx, s) {
   if (s.scan === 100 || s.scanTimer) return;
@@ -174,9 +191,9 @@ export function handleOnboarding(action, el, ctx) {
   if(action==='ob-turnover'){s.gstRequired=el.value==='yes';present(ctx);return true;}
   if (action === 'ob-help') { ctx.toast('Connect demo tools, set your rules, then review every action from the dashboard.'); return true; }
   if (action === 'ob-connect') {
-    const k = el.dataset.key; if (!['shop','gst','wa','ship','voice'].includes(k) || (['shop','gst'].includes(k)&&s[k]!=='idle')) return true;
-    s[k] = 'loading'; present(ctx);
-    s.timers.push(setTimeout(() => { if (!alive(ctx, s)) return; s[k] = 'done';ctx.connect(k==='shop'?'shopify':k==='gst'?(s.gstChoice==='Tally'?'tally':'zoho'):{wa:'whatsapp',ship:'shiprocket',voice:s.voice==='sv'?'sarvam':'elevenlabs'}[k]);present(ctx); ctx.toast(`${k === 'shop' ? 'Shopify' : s.gstChoice} demo connected`); }, 650)); return true;
+    const k = el.dataset.key; if (!['shop','gst','wa','ship','voice'].includes(k) ||s.connecting?.includes(k)|| (['shop','gst'].includes(k)&&s[k]!=='idle')) return true;
+    s.connecting=[...(s.connecting||[]),k];if(['shop','gst'].includes(k))s[k]='loading';refreshConnection(ctx,s,k);
+    s.timers.push(setTimeout(() => { if (!alive(ctx, s)) return; s.connecting=(s.connecting||[]).filter(id=>id!==k);if(['shop','gst'].includes(k))s[k]='done';ctx.connect(k==='shop'?'shopify':k==='gst'?(s.gstChoice==='Tally'?'tally':'zoho'):{wa:'whatsapp',ship:'shiprocket',voice:s.voice==='sv'?'sarvam':'elevenlabs'}[k]);refreshConnection(ctx,s,k);ctx.toast(`${{shop:'Shopify',gst:s.gstChoice,wa:'WhatsApp',ship:'Shiprocket',voice:s.voice==='sv'?'Sarvam AI':'ElevenLabs'}[k]} demo connected`); }, 650)); return true;
   }
   if (action === 'ob-gst-choice') { if (s.gst === 'idle') { s.gstChoice = el.dataset.choice; present(ctx); } return true; }
   if (action === 'ob-tool-choice') { s[el.dataset.key] = el.value; present(ctx); return true; }

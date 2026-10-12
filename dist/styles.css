@@ -30,3 +30,5 @@
 @media(max-width:700px){body:has(.ob-wizard) .toast{bottom:96px}}
 @media(max-width:700px){.dash-heading{grid-template-columns:20px 34px minmax(0,1fr);gap:10px}.dash-heading .dash-tools{display:grid;grid-template-columns:minmax(0,1fr) auto 34px;margin-left:0;gap:7px;width:100%}.dash-heading .dash-tools>.btn,.date-trigger{font-size:11px;height:34px;min-height:34px}.date-control{width:100%}.date-trigger{min-width:0;width:100%;padding:0 10px;gap:7px}.dash-tools [data-action="agent-pause"]{width:34px;padding:0}.dash-tools .control-label{display:none}.date-menu{left:0;right:auto}.dash-title-line{gap:7px}}
 @media(max-width:700px){.draft-row .agent-copy{min-width:170px}.draft-row .draft-task{max-width:235px}.draft-row>.row{margin-left:50px}}
+/* Entrance motion runs once per overlay, never on an in-place update. */
+.modal-panel.overlay-update{animation:none}
