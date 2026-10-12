@@ -1,7 +1,7 @@
 import {agentStatus,modeLabel,rangeCaption,RANGES,defaultQuote,connectorStatus,TODAY} from './model.js';
 import {icon,esc,button,badge,money,empty} from './ui.js';
 import {renderStudio,handleStudio,agents,changeSlide} from './studio.js';
-import {renderDetail,handleOnboarding,tickStory} from './onboarding.js';
+import {renderDetail,handleOnboarding} from './onboarding.js';
 import {renderDashboard,handleDashboard} from './dashboard.js';
 import {openRay,handleRay,renderRayPanel} from './ray.js';
 
@@ -123,6 +123,5 @@ document.addEventListener('submit',event=>{if(event.target.id==='dashboard-ray-f
 document.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)&&event.target.matches('[role="button"][data-action]')){event.preventDefault();event.target.click();}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'){event.preventDefault();handleRoot('command-open',document.body);}if(event.key==='Escape'){closeDateMenu(true);closeOverlay();if(ui.sidebar){ui.sidebar=false;render();}}if(event.key==='Tab'&&document.getElementById('overlay-root').firstChild){const items=[...document.querySelectorAll('#overlay-root button:not(:disabled),#overlay-root a[href],#overlay-root input:not(:disabled),#overlay-root select:not(:disabled),#overlay-root textarea:not(:disabled),#overlay-root [tabindex="0"]')].filter(x=>x.offsetParent!==null);const first=items[0],last=items.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}});
 document.addEventListener('pointerover',event=>{if(event.target.closest('[data-carousel]'))carouselHold=true;});document.addEventListener('pointerout',event=>{if(event.target.closest('[data-carousel]')&&!event.relatedTarget?.closest?.('[data-carousel]'))carouselHold=false;});document.addEventListener('focusin',event=>{if(event.target.closest('[data-carousel]'))carouselHold=true;});document.addEventListener('focusout',event=>{if(event.target.closest('[data-carousel]')&&!event.relatedTarget?.closest?.('[data-carousel]'))carouselHold=false;});
 setInterval(()=>{if(route()==='/studio/home'&&!carouselHold&&!document.hidden&&!matchMedia('(prefers-reduced-motion:reduce)').matches&&!document.getElementById('overlay-root').firstChild){ui.slide=((ui.slide||0)+1)%4;changeSlide(ctx);}},7000);
-setInterval(()=>tickStory(ctx),250);
 window.addEventListener('hashchange',()=>{closeDateMenu();closeOverlay(false);ui.sidebar=false;render();});window.addEventListener('resize',()=>{document.getElementById('sidebar').inert=matchMedia('(max-width:700px)').matches&&!ui.sidebar;});
 render();
