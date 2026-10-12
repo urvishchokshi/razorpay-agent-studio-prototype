@@ -1,0 +1,10 @@
+import {createServer} from 'node:http';
+import {readFile,stat} from 'node:fs/promises';
+import {join,extname,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {gzipSync} from 'node:zlib';
+const root=fileURLToPath(new URL('./dist/',import.meta.url));
+const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.webp':'image/webp','.svg':'image/svg+xml','.json':'application/json'};
+const server=createServer(async(req,res)=>{try{const requested=decodeURIComponent(new URL(req.url,'http://localhost').pathname);const path=resolve(join(root,requested==='/'?'index.html':requested));if(!path.startsWith(root))throw Error('bad path');const data=await readFile(path);const type=mime[extname(path)]||'application/octet-stream';res.setHeader('Content-Type',type);res.setHeader('Cache-Control',extname(path)==='.woff2'?'public,max-age=31536000,immutable':'no-cache');res.setHeader('X-Content-Type-Options','nosniff');if(/gzip/.test(req.headers['accept-encoding']||'')&&/text|json/.test(type)){res.setHeader('Content-Encoding','gzip');res.end(gzipSync(data));}else res.end(data);}catch{res.writeHead(404);res.end('Page not found');}});
+const port=Number(process.env.PORT)||4173;
+server.listen(port,'0.0.0.0',()=>console.log(`Local: http://localhost:${port}`));
