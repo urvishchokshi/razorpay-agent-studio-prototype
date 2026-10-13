@@ -1,0 +1,6 @@
+.git/
+.openai/
+videos/
+artifacts/
+*.zip
+node_modules/

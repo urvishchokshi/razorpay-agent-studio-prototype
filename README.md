@@ -20,7 +20,7 @@ Open http://localhost:4173. Set `PORT` to choose another port. `npm run build` c
 4. Open Activity → Buyers to inspect evidence, order history and conversations.
 5. Edit rules in Settings, pause/resume the agent, and inspect the activity log.
 
-Use **Ask Ray** in the agent dashboard header to summarize the current period, understand the pending queue, or prepare standard approvals. Ray presents the proposed actions for your review before applying your selected approvals to the synthetic workspace. Exceptions remain available for individual review.
+Use the compact **Ask Ray** input below the dashboard summary to summarize the current period, understand the pending queue, or prepare standard approvals. Ray presents the proposed actions for your review before applying your selected approvals to the synthetic workspace. Exceptions remain available for individual review.
 
 Other agents have capability previews and synthetic dashboards. Studio includes search, category filters, connectors, notification preferences and a draft workflow builder. The payment pages provide sample records and CSV exports. Global search opens with Command/Ctrl K.
 
@@ -38,6 +38,12 @@ All state stays in browser local storage under `razorpay-agent-studio-v1`. Reset
 - `.openai/hosting.json`: private Sites deployment identity.
 
 Original `.dc.html` exports remain untouched in the parent directory.
+
+## Deploy on Vercel
+
+Import this repository into Vercel. The included `vercel.json` selects the Other framework preset, runs `npm run build` to validate the website, and serves `dist/` as the output directory. Hash-based routes work without server rewrites.
+
+The website has no environment variables or external service dependencies. Walkthrough video assets and local deployment metadata are excluded from deployment uploads.
 
 ## Verification
 
