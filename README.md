@@ -1,5 +1,7 @@
 # Razorpay Agent Studio prototype
 
+[Live prototype on Vercel](https://razorpay-agent-studio-prototype.vercel.app)
+
 A complete browser-local prototype built from the supplied Claude Design screens. It preserves the navy header, light navigation, white workspace, compact cards and cyan glass hero. Fonts and component proportions follow Razorpay's open-source Blade system.
 
 ## Run locally
