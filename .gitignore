@@ -4,3 +4,7 @@ artifacts/
 *.zip
 videos/
 .vercel/
+.env
+.env.*
+.vercel
+.env*
